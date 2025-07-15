@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Анализ загруженности парковки</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+      background: #f0f2f5;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    form {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    select, input[type="file"], button {
+      padding: 10px;
+      font-size: 16px;
+    }
+    #result-canvas {
+      display: block;
+      margin: 0 auto;
+      max-width: 90vw;
+      border: 1px solid #ccc;
+    }
+    #history {
+      max-width: 800px;
+      margin: 40px auto;
+    }
+    #history h2 {
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px;
+      border: 1px solid #aaa;
+      text-align: center;
+    }
+    a.download-link {
+      color: #1a73e8;
+      text-decoration: none;
+    }
+    a.download-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>Анализ загруженности парковки ТЦ</h1>
+
+  <form id="upload-form">
+    <input type="file" name="file" accept="image/*,video/*" required />
+    <select name="mode" required>
+      <option value="detection">YOLOv8 (Детекция)</option>
+      <option value="segmentation">Mask R-CNN (Сегментация)</option>
+      <option value="classification">ResNet (Классификация)</option>
+    </select>
+    <button type="submit">Обработать</button>
+  </form>
+
+  <canvas id="result-canvas"></canvas>
+
+  <section id="history">
+    <h2>История запросов</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Файл</th>
+          <th>Режим</th>
+          <th>Дата</th>
+          <th>Объекты</th>
+          <th>Отчёт PDF</th>
+        </tr>
+      </thead>
+      <tbody id="history-body"></tbody>
+    </table>
+  </section>
+
+  <script async src="https://docs.opencv.org/4.x/opencv.js" onload="onOpenCvReady();"></script>
+  <script>
+    let cvReady = false;
+    function onOpenCvReady() {
+      cvReady = true;
+      console.log("OpenCV.js готов");
+    }
+
+    const form = document.getElementById('upload-form');
+    const canvas = document.getElementById('result-canvas');
+    const ctx = canvas.getContext('2d');
+    const historyBody = document.getElementById('history-body');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!cvReady) {
+        alert("OpenCV.js еще не загружен");
+        return;
+      }
+
+      const fileInput = form.file;
+      const mode = form.mode.value;
+      if (!fileInput.files.length) return alert("Выберите файл");
+
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("mode", mode);
+
+      try {
+        const resp = await fetch('http://localhost:8000/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await resp.json();
+        console.log('Ответ сервера:', data);
+
+        drawResultImage(`http://localhost:8000${data.result_path}`);
+        loadHistory();
+      } catch (err) {
+        alert("Ошибка при загрузке и обработке: " + err);
+      }
+    });
+
+    function drawResultImage(url) {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+      };
+      img.src = url;
+    }
+
+    async function loadHistory() {
+      try {
+        const resp = await fetch('http://localhost:8000/history');
+        const history = await resp.json();
+        historyBody.innerHTML = '';
+        for (const item of history.reverse()) {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${item.id}</td>
+            <td>${item.filename}</td>
+            <td>${item.mode}</td>
+            <td>${new Date(item.timestamp).toLocaleString()}</td>
+            <td>${item.stats.objects_detected ?? item.stats.objects_segmented ?? item.stats.predicted_class_id ?? '-'}</td>
+            <td><a class="download-link" href="http://localhost:8000${item.report_path}" target="_blank">Скачать</a></td>
+          `;
+          historyBody.appendChild(row);
+        }
+      } catch (err) {
+        console.error('Ошибка загрузки истории', err);
+      }
+    }
+
+    loadHistory();
+  </script>
+</body>
+</html>

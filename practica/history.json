@@ -1,0 +1,35 @@
+[
+  {
+    "id": "07679023-c82b-4c0b-892a-de8934ce3e65",
+    "filename": "07679023-c82b-4c0b-892a-de8934ce3e65.jpg",
+    "mode": "detection",
+    "timestamp": "2025-07-15T22:11:27.542756",
+    "result_path": "/results/07679023-c82b-4c0b-892a-de8934ce3e65_det.jpg",
+    "report_path": "/reports/07679023-c82b-4c0b-892a-de8934ce3e65.pdf",
+    "stats": {
+      "objects_detected": 45
+    }
+  },
+  {
+    "id": "e930106e-28ad-44aa-98a2-7075ad09f9f9",
+    "filename": "e930106e-28ad-44aa-98a2-7075ad09f9f9.jpg",
+    "mode": "segmentation",
+    "timestamp": "2025-07-15T22:12:20.069713",
+    "result_path": "/results/e930106e-28ad-44aa-98a2-7075ad09f9f9_seg.jpg",
+    "report_path": "/reports/e930106e-28ad-44aa-98a2-7075ad09f9f9.pdf",
+    "stats": {
+      "objects_segmented": 53
+    }
+  },
+  {
+    "id": "23179e30-cac3-40a9-80fe-ac40e351debc",
+    "filename": "23179e30-cac3-40a9-80fe-ac40e351debc.jpg",
+    "mode": "classification",
+    "timestamp": "2025-07-15T22:12:49.511556",
+    "result_path": "/results/23179e30-cac3-40a9-80fe-ac40e351debc_cls.jpg",
+    "report_path": "/reports/23179e30-cac3-40a9-80fe-ac40e351debc.pdf",
+    "stats": {
+      "predicted_class_id": 487
+    }
+  }
+]
